@@ -104,7 +104,6 @@
             <div class="status" id="statBadge"><span class="dot"></span> Offline</div>
         </div>
 
-        <!-- DASHBOARD -->
         <div class="page act" id="dash">
             <div class="card">
                 <div style="text-align:center; font-size:13px; color:#8e8e93;">TOTAL BALANCE</div>
@@ -126,7 +125,7 @@
                     <button class="mbtn" onclick="setMode('balanced',this)">⚖️ Balanced</button>
                     <button class="mbtn" onclick="setMode('aggressive',this)">🚀 Aggressive</button>
                 </div>
-                <div style="font-size:12px; color:#8e8e93; margin-top:8px;" id="mdesc">1% risk · 500 pip SL · Max 2 positions</div>
+                <div style="font-size:12px; color:#8e8e93; margin-top:8px;" id="mdesc">1% risk - 500 pip SL - Max 2 positions</div>
             </div>
 
             <div class="card">
@@ -158,7 +157,6 @@
             <div id="alerts"></div>
         </div>
 
-        <!-- CONNECTION -->
         <div class="page" id="conn">
             <div class="card">
                 <div style="font-size:13px; color:#8e8e93; letter-spacing:1px;">CONNECT TO MT5</div>
@@ -183,8 +181,8 @@
                 <div style="font-size:13px; color:#8e8e93; line-height:1.6; margin-top:6px;">
                     • Trades Crash, Boom & Volatility indices<br>
                     • Start with DEMO account<br>
-                    • Bot runs on PC with MT5 open<br>
-                    • Python backend required on PC
+                    • MT5 must be OPEN on your PC<br>
+                    • Keep PowerShell window running
                 </div>
             </div>
         </div>
@@ -196,7 +194,6 @@
     </div>
 
     <script>
-        // Save connection details
         if(localStorage.getItem('mt5')){
             let s=JSON.parse(localStorage.getItem('mt5'));
             document.getElementById('broker').value=s.broker||'deriv';
@@ -222,9 +219,9 @@
             mode=m;
             document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('sel'));
             el.classList.add('sel');
-            let d={safe:'1% risk · 500 pip SL · Max 2 positions',balanced:'2% risk · 400 pip SL · Max 3 positions',aggressive:'5% risk · 300 pip SL · Max 5 positions'};
+            let d={safe:'1% risk - 500 pip SL - Max 2 positions',balanced:'2% risk - 400 pip SL - Max 3 positions',aggressive:'5% risk - 300 pip SL - Max 5 positions'};
             document.getElementById('mdesc').textContent=d[m];
-            try{fetch('http://YOUR_PC_IP:5000/api/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:m})});}catch(e){}
+            try{fetch('http://192.168.11.168:5000/api/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:m})});}catch(e){}
         }
 
         function alert(msg,type){
@@ -250,7 +247,7 @@
             localStorage.setItem('mt5',JSON.stringify({broker:b,accid:aid,server:sv}));
             let m=document.getElementById('cmsg');
             m.innerHTML='<div style="padding:10px;">Connecting...</div>';
-            fetch('http://YOUR_PC_IP:5000/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({broker:b,account_id:parseInt(aid),password:pw,server:sv})})
+            fetch('http://192.168.11.168:5000/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({broker:b,account_id:parseInt(aid),password:pw,server:sv})})
             .then(r=>r.json())
             .then(d=>{
                 if(d.success){
@@ -265,11 +262,11 @@
                     m.innerHTML='<div class="alert a-err show">❌ '+(d.error||'Failed')+'</div>';
                 }
             })
-            .catch(e=>{m.innerHTML='<div class="alert a-warn show">⚠️ Cannot reach bot. Is PC running?</div>';});
+            .catch(e=>{m.innerHTML='<div class="alert a-warn show">⚠️ Cannot reach bot. Is backend.py running on PC?</div>';});
         }
 
         function startBot(){
-            fetch('http://YOUR_PC_IP:5000/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode})})
+            fetch('http://192.168.11.168:5000/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode})})
             .then(r=>r.json())
             .then(d=>{
                 if(d.success){
@@ -279,29 +276,29 @@
                     toast('🚀 Trading Started');
                 }
             })
-            .catch(e=>alert('Cannot start. Check PC.','err'));
+            .catch(e=>alert('Cannot start. Is backend.py running?','err'));
         }
 
         function stopBot(){
-            fetch('http://YOUR_PC_IP:5000/api/stop',{method:'POST'})
+            fetch('http://192.168.11.168:5000/api/stop',{method:'POST'})
             .then(()=>{
                 document.getElementById('sbtn').style.display='block';
                 document.getElementById('xbtn').style.display='none';
                 alert('⏹️ Bot stopped','warn');
                 toast('Trading Stopped');
             })
-            .catch(e=>alert('Cannot stop. Check PC.','err'));
+            .catch(e=>alert('Cannot stop. Is backend.py running?','err'));
         }
 
         function closeAll(){
-            fetch('http://YOUR_PC_IP:5000/api/close-all',{method:'POST'})
+            fetch('http://192.168.11.168:5000/api/close-all',{method:'POST'})
             .then(()=>{alert('🔒 All positions closed','ok'); toast('Positions Closed');})
-            .catch(e=>alert('Cannot close. Check PC.','err'));
+            .catch(e=>alert('Cannot close. Is backend.py running?','err'));
         }
 
         function startPoll(){
             setInterval(()=>{
-                fetch('http://YOUR_PC_IP:5000/api/status')
+                fetch('http://192.168.11.168:5000/api/status')
                 .then(r=>r.json())
                 .then(d=>{
                     document.getElementById('bal').textContent='$'+d.balance.toLocaleString('en-US',{minimumFractionDigits:2});
