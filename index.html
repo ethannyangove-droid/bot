@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>CrashBoom Bot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000; color: #fff; padding: 16px;
+            min-height: 100vh; padding-bottom: 100px;
+        }
+        .container { max-width: 390px; margin: 0 auto; }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; position: sticky; top: 0; background: #000; z-index: 10;
+        }
+        .logo { font-size: 22px; font-weight: 700; color: #0071e3; }
+        .status {
+            font-size: 13px; padding: 6px 12px; border-radius: 20px;
+            background: rgba(255,59,48,0.15); color: #ff3b30;
+        }
+        .status.on { background: rgba(52,199,89,0.15); color: #34c759; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+            background: #ff3b30; margin-right: 4px; }
+        .status.on .dot { background: #34c759; }
+        .card {
+            background: #1c1c2e; border-radius: 18px; padding: 18px;
+            margin-bottom: 14px; border: 1px solid #2c2c3e;
+        }
+        .bal { font-size: 40px; font-weight: 700; text-align: center; margin: 10px 0; }
+        .green { color: #34c759; } .red { color: #ff3b30; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+        .stat {
+            text-align: center; padding: 12px; background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+        }
+        .stat .val { font-size: 20px; font-weight: 600; }
+        .stat .lbl { font-size: 11px; color: #8e8e93; margin-top: 3px; }
+        .modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .mbtn {
+            padding: 12px; border: 2px solid #2c2c3e; background: transparent;
+            color: #fff; border-radius: 12px; font-size: 14px; font-weight: 600;
+            cursor: pointer; text-align: center;
+        }
+        .mbtn.sel { border-color: #0071e3; background: rgba(0,113,227,0.15); color: #0071e3; }
+        .btn {
+            width: 100%; padding: 15px; border: none; border-radius: 14px;
+            font-size: 16px; font-weight: 600; cursor: pointer; margin: 5px 0;
+        }
+        .btn-blue { background: #0071e3; color: #fff; }
+        .btn-red { background: #ff3b30; color: #fff; }
+        .btn-out { background: transparent; border: 2px solid #2c2c3e; color: #fff; }
+        .btn:active { opacity: 0.7; }
+        input, select {
+            width: 100%; padding: 14px; background: rgba(255,255,255,0.06);
+            border: 1px solid #2c2c3e; border-radius: 12px; color: #fff;
+            font-size: 15px; margin: 7px 0; -webkit-appearance: none;
+        }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; }
+        label { font-size: 13px; color: #8e8e93; display: block; margin-top: 8px; }
+        .pos {
+            background: rgba(255,255,255,0.04); padding: 12px; border-radius: 12px;
+            margin: 8px 0; border-left: 3px solid #0071e3;
+        }
+        .pos .sym { font-weight: 600; font-size: 15px; }
+        .pos .det { font-size: 12px; color: #8e8e93; margin: 3px 0; }
+        .pos .pnl { font-weight: 600; font-size: 15px; }
+        .tags { margin-top: 8px; }
+        .tag {
+            display: inline-block; padding: 3px 8px; border-radius: 6px;
+            font-size: 11px; margin: 2px;
+        }
+        .tag-b { background: rgba(52,199,89,0.2); color: #34c759; }
+        .tag-c { background: rgba(255,59,48,0.2); color: #ff3b30; }
+        .tag-v { background: rgba(255,149,0,0.2); color: #ff9500; }
+        .alert {
+            padding: 12px; border-radius: 12px; margin: 6px 0; font-size: 13px; display: none;
+        }
+        .alert.show { display: block; }
+        .a-ok { background: rgba(52,199,89,0.15); color: #34c759; border: 1px solid rgba(52,199,89,0.3); }
+        .a-err { background: rgba(255,59,48,0.15); color: #ff3b30; border: 1px solid rgba(255,59,48,0.3); }
+        .a-warn { background: rgba(255,149,0,0.15); color: #ff9500; border: 1px solid rgba(255,149,0,0.3); }
+        .nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background: #1c1c2e;
+            border-top: 1px solid #2c2c3e; display: flex; justify-content: space-around;
+            padding: 8px; z-index: 100;
+        }
+        .nitem { text-align: center; color: #8e8e93; font-size: 10px; padding: 6px; cursor: pointer; }
+        .nitem.act { color: #0071e3; }
+        .nicon { font-size: 22px; }
+        .page { display: none; padding-bottom: 80px; }
+        .page.act { display: block; }
+        .small { font-size: 11px; color: #8e8e93; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">CrashBoomBot</div>
+            <div class="status" id="statBadge"><span class="dot"></span> Offline</div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="page act" id="dash">
+            <div class="card">
+                <div style="text-align:center; font-size:13px; color:#8e8e93;">TOTAL BALANCE</div>
+                <div class="bal" id="bal">$0.00</div>
+                <div style="text-align:center; font-size:15px;" id="dpnl">$0.00 Today</div>
+                <div style="text-align:center; font-size:11px; color:#8e8e93; margin-top:4px;" id="acct">-</div>
+                <div class="grid2">
+                    <div class="stat"><div class="val" id="ops">0</div><div class="lbl">Open Positions</div></div>
+                    <div class="stat"><div class="val" id="float">$0</div><div class="lbl">Floating P&L</div></div>
+                    <div class="stat"><div class="val" id="trades">0</div><div class="lbl">Today's Trades</div></div>
+                    <div class="stat"><div class="val green" id="wrate">0%</div><div class="lbl">Win Rate</div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="font-size:13px; color:#8e8e93; letter-spacing:1px;">TRADING MODE</div>
+                <div class="modes" id="modes">
+                    <button class="mbtn sel" onclick="setMode('safe',this)">🛡️ Safe</button>
+                    <button class="mbtn" onclick="setMode('balanced',this)">⚖️ Balanced</button>
+                    <button class="mbtn" onclick="setMode('aggressive',this)">🚀 Aggressive</button>
+                </div>
+                <div style="font-size:12px; color:#8e8e93; margin-top:8px;" id="mdesc">1% risk · 500 pip SL · Max 2 positions</div>
+            </div>
+
+            <div class="card">
+                <div style="font-size:13px; color:#8e8e93; letter-spacing:1px;">CONTROLS</div>
+                <button class="btn btn-blue" id="sbtn" onclick="startBot()">▶️ Start Trading</button>
+                <button class="btn btn-red" id="xbtn" onclick="stopBot()" style="display:none;">⏹️ Stop Trading</button>
+                <button class="btn btn-out" onclick="closeAll()">🔒 Close All Positions</button>
+            </div>
+
+            <div class="card">
+                <div style="font-size:13px; color:#8e8e93; letter-spacing:1px;">OPEN POSITIONS</div>
+                <div id="poslist"><div style="color:#8e8e93; text-align:center; padding:16px;">No open positions</div></div>
+            </div>
+
+            <div class="card">
+                <div style="font-size:13px; color:#8e8e93; letter-spacing:1px;">🎯 TRADING SYMBOLS</div>
+                <div class="tags">
+                    <span class="tag tag-b">BOOM 1000</span>
+                    <span class="tag tag-b">BOOM 500</span>
+                    <span class="tag tag-c">CRASH 1000</span>
+                    <span class="tag tag-c">CRASH 500</span>
+                    <span class="tag tag-v">Volatility 10</span>
+                    <span class="tag tag-v">Volatility 25</span>
+                    <span class="tag tag-v">Volatility 50</span>
+                    <span class="tag tag-v">Volatility 75</span>
+                    <span class="tag tag-v">Volatility 100</span>
+                </div>
+            </div>
+            <div id="alerts"></div>
+        </div>
+
+        <!-- CONNECTION -->
+        <div class="page" id="conn">
+            <div class="card">
+                <div style="font-size:13px; color:#8e8e93; letter-spacing:1px;">CONNECT TO MT5</div>
+                <label>Broker</label>
+                <select id="broker" onchange="upHint()">
+                    <option value="deriv">Deriv</option>
+                    <option value="exness">Exness</option>
+                </select>
+                <label>MT5 Account ID (Login)</label>
+                <input type="number" id="accid" placeholder="e.g. 12345678">
+                <div class="small">Find in MT5 → tap person icon 👤</div>
+                <label>MT5 Password</label>
+                <input type="password" id="pass" placeholder="Your password">
+                <label>MT5 Server</label>
+                <input type="text" id="server" placeholder="e.g. Deriv-Demo">
+                <div class="small" id="hint">DEMO: Deriv-Demo | REAL: Deriv-Server</div>
+                <button class="btn btn-blue" onclick="connect()" style="margin-top:12px;">🔗 Connect</button>
+                <div id="cmsg"></div>
+            </div>
+            <div class="card">
+                <div style="font-size:13px; color:#ff9500;">⚠️ IMPORTANT</div>
+                <div style="font-size:13px; color:#8e8e93; line-height:1.6; margin-top:6px;">
+                    • Trades Crash, Boom & Volatility indices<br>
+                    • Start with DEMO account<br>
+                    • Bot runs on PC with MT5 open<br>
+                    • Python backend required on PC
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nitem act" onclick="showPage('dash',this)"><div class="nicon">📊</div>Dashboard</div>
+        <div class="nitem" onclick="showPage('conn',this)"><div class="nicon">🔌</div>Connect</div>
+    </div>
+
+    <script>
+        // Save connection details
+        if(localStorage.getItem('mt5')){
+            let s=JSON.parse(localStorage.getItem('mt5'));
+            document.getElementById('broker').value=s.broker||'deriv';
+            document.getElementById('accid').value=s.accid||'';
+            document.getElementById('server').value=s.server||'';
+            upHint();
+        }
+
+        function showPage(p,el){
+            document.querySelectorAll('.page').forEach(x=>x.classList.remove('act'));
+            document.getElementById(p).classList.add('act');
+            document.querySelectorAll('.nitem').forEach(x=>x.classList.remove('act'));
+            el.classList.add('act');
+        }
+
+        function upHint(){
+            let b=document.getElementById('broker').value;
+            document.getElementById('hint').textContent=b==='deriv'?'DEMO: Deriv-Demo | REAL: Deriv-Server':'DEMO: Exness-MT5Demo | REAL: Exness-MT5Real';
+        }
+
+        let mode='safe';
+        function setMode(m,el){
+            mode=m;
+            document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('sel'));
+            el.classList.add('sel');
+            let d={safe:'1% risk · 500 pip SL · Max 2 positions',balanced:'2% risk · 400 pip SL · Max 3 positions',aggressive:'5% risk · 300 pip SL · Max 5 positions'};
+            document.getElementById('mdesc').textContent=d[m];
+            try{fetch('http://YOUR_PC_IP:5000/api/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:m})});}catch(e){}
+        }
+
+        function alert(msg,type){
+            let a=document.createElement('div');
+            a.className='alert a-'+type+' show'; a.textContent=msg;
+            document.getElementById('alerts').prepend(a);
+            setTimeout(()=>{a.style.opacity='0'; a.style.transition='opacity 0.3s'; setTimeout(()=>a.remove(),300);},3500);
+        }
+
+        function toast(msg){
+            let t=document.createElement('div');
+            t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1c1c2e;color:#fff;padding:12px 20px;border-radius:12px;z-index:1000;font-weight:600;border:1px solid #2c2c3e;';
+            t.textContent=msg; document.body.appendChild(t);
+            setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},2000);
+        }
+
+        function connect(){
+            let b=document.getElementById('broker').value;
+            let aid=document.getElementById('accid').value;
+            let pw=document.getElementById('pass').value;
+            let sv=document.getElementById('server').value;
+            if(!aid||!pw||!sv){alert('Fill all fields','err');return;}
+            localStorage.setItem('mt5',JSON.stringify({broker:b,accid:aid,server:sv}));
+            let m=document.getElementById('cmsg');
+            m.innerHTML='<div style="padding:10px;">Connecting...</div>';
+            fetch('http://YOUR_PC_IP:5000/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({broker:b,account_id:parseInt(aid),password:pw,server:sv})})
+            .then(r=>r.json())
+            .then(d=>{
+                if(d.success){
+                    document.getElementById('statBadge').innerHTML='<span class="dot"></span> Connected';
+                    document.getElementById('statBadge').classList.add('on');
+                    document.getElementById('bal').textContent='$'+d.balance.toLocaleString('en-US',{minimumFractionDigits:2});
+                    document.getElementById('acct').textContent=d.account_type.toUpperCase()+' Account';
+                    m.innerHTML='<div class="alert a-ok show">✅ Connected! Balance: $'+d.balance.toFixed(2)+'</div>';
+                    toast('✅ Connected!');
+                    startPoll();
+                }else{
+                    m.innerHTML='<div class="alert a-err show">❌ '+(d.error||'Failed')+'</div>';
+                }
+            })
+            .catch(e=>{m.innerHTML='<div class="alert a-warn show">⚠️ Cannot reach bot. Is PC running?</div>';});
+        }
+
+        function startBot(){
+            fetch('http://YOUR_PC_IP:5000/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode})})
+            .then(r=>r.json())
+            .then(d=>{
+                if(d.success){
+                    document.getElementById('sbtn').style.display='none';
+                    document.getElementById('xbtn').style.display='block';
+                    alert('🤖 Bot started in '+mode.toUpperCase()+' mode!','ok');
+                    toast('🚀 Trading Started');
+                }
+            })
+            .catch(e=>alert('Cannot start. Check PC.','err'));
+        }
+
+        function stopBot(){
+            fetch('http://YOUR_PC_IP:5000/api/stop',{method:'POST'})
+            .then(()=>{
+                document.getElementById('sbtn').style.display='block';
+                document.getElementById('xbtn').style.display='none';
+                alert('⏹️ Bot stopped','warn');
+                toast('Trading Stopped');
+            })
+            .catch(e=>alert('Cannot stop. Check PC.','err'));
+        }
+
+        function closeAll(){
+            fetch('http://YOUR_PC_IP:5000/api/close-all',{method:'POST'})
+            .then(()=>{alert('🔒 All positions closed','ok'); toast('Positions Closed');})
+            .catch(e=>alert('Cannot close. Check PC.','err'));
+        }
+
+        function startPoll(){
+            setInterval(()=>{
+                fetch('http://YOUR_PC_IP:5000/api/status')
+                .then(r=>r.json())
+                .then(d=>{
+                    document.getElementById('bal').textContent='$'+d.balance.toLocaleString('en-US',{minimumFractionDigits:2});
+                    let pnl=document.getElementById('dpnl');
+                    if(d.daily_pnl>=0){pnl.className='green'; pnl.textContent='+$'+d.daily_pnl.toFixed(2)+' Today';}
+                    else{pnl.className='red'; pnl.textContent='-$'+Math.abs(d.daily_pnl).toFixed(2)+' Today';}
+                    document.getElementById('ops').textContent=d.open_positions;
+                    let f=document.getElementById('float');
+                    if(d.total_profit>=0){f.className='val green'; f.textContent='+$'+d.total_profit.toFixed(2);}
+                    else{f.className='val red'; f.textContent='-$'+Math.abs(d.total_profit).toFixed(2);}
+                    if(d.positions&&d.positions.length>0){
+                        let h='';
+                        d.positions.forEach(p=>{
+                            let pc=p.profit>=0?'green':'red';
+                            h+='<div class="pos"><div class="sym">'+p.symbol+' - '+p.type+'</div><div class="det">Vol: '+p.volume+' | Open: '+p.open_price+' | Now: '+p.current_price+'</div><div class="pnl '+pc+'">$'+p.profit.toFixed(2)+'</div></div>';
+                        });
+                        document.getElementById('poslist').innerHTML=h;
+                    }else{document.getElementById('poslist').innerHTML='<div style="color:#8e8e93;text-align:center;padding:16px;">No open positions</div>';}
+                }).catch(()=>{});
+            },2000);
+        }
+    </script>
+</body>
+</html>
